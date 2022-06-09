@@ -1,0 +1,41 @@
+PUT http://localhost:8000/api/account
+Content-Type: application/json
+
+{
+    "email": "mxr@qq.com",
+    "pwd": "654321"
+}
+
+###
+PUT http://localhost:8000/api/account
+Content-Type: application/json
+
+{
+    "email": "mxr@qq.com",
+    "username": "Dick"
+}
+
+###
+GET http://localhost:8000/api/account/info/mxr@qq.com
+Accept: application/json
+
+###
+POST http://localhost:8000/api/account/logIn
+Content-Type: application/json
+
+{
+    "email": "mxr@qq.com",
+    "pwd": "123456"
+}
+
+###
+POST http://localhost:8000/api/account/register
+Content-Type: application/json
+
+{
+    "email": "mxr@qq.com",
+    "username": "mxr",
+    "pwd": "123456"
+}
+
+###

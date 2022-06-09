@@ -1,0 +1,10 @@
+POST http://localhost:8000/api/like
+Content-Type: application/json
+
+{
+    "email": "mxr@qq.com",
+    "articleId": 1,
+    "positive": false
+}
+
+###

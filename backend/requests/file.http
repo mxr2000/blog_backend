@@ -1,0 +1,10 @@
+POST http://localhost:8000/api/file
+Content-Type: multipart/form-data; boundary=WebAppBoundary
+
+--WebAppBoundary
+Content-Disposition: form-data; name="file"; filename="file.txt"
+
+< ../../Dockerfile
+--WebAppBoundary--
+
+###

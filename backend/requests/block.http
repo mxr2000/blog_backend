@@ -1,0 +1,12 @@
+GET http://localhost:8000/api/block
+Accept: application/json
+
+###
+POST http://localhost:8000/api/block
+Content-Type: application/json
+
+{
+    "name": "game"
+}
+
+###
