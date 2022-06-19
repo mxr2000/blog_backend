@@ -5,18 +5,30 @@ import {getCurrentTimeStr} from "../utils/time";
 
 const queryArticle = async (id: number): Promise<Article> => {
     return new Promise((resolve, reject) => {
-        const sql = `SELECT t_article.id    AS id,
-                            t_article.email AS email,
+        const sql = `SELECT t_article.id                                          AS id,
+                            t_article.email                                       AS email,
                             blockId,
-                            t_block.name    AS blockName,
+                            t_block.name                                          AS blockName,
+                            CONCAT('avatar_', t_account.email, '.', avatarFormat) AS avatar,
                             header,
                             content,
                             createdTime,
-                            updatedTime
+                            updatedTime,
+                            (SELECT COUNT(*)
+                             FROM blog.t_like
+                             WHERE t_like.articleId = t_article.id
+                               AND positive = 1)                                  AS positiveLikesCount,
+                            (SELECT COUNT(*)
+                             FROM blog.t_like
+                             WHERE t_like.articleId = t_article.id
+                               AND positive = 0)                                  AS negativeLikesCount
                      FROM t_article,
-                          t_block
+                          t_block,
+                          t_account
                      WHERE t_article.id = ?
-                       AND t_article.blockId = t_block.id`
+                       AND t_article.blockId = t_block.id
+                       AND t_article.email = t_account.email`
+
         connection.query(sql, [id], (err, result: Article[], fields) => {
             if (err != null) {
                 reject(err)
@@ -31,9 +43,18 @@ const queryArticle = async (id: number): Promise<Article> => {
 
 const queryArticleByEmail = async (email: string): Promise<Article[]> => {
     return new Promise((resolve, reject) => {
-        const sql = `SELECT *
-                     FROM t_article
-                     WHERE email = ?`
+        const sql = `SELECT t_article.id    AS id,
+                            t_article.email AS email,
+                            createdTime,
+                            header,
+                            blockId,
+                            t_block.name    AS blockName
+                     FROM t_article,
+                          t_block,
+                          t_account
+                     WHERE t_article.email = ?
+                       AND t_article.email = t_account.email
+                       AND t_block.id = t_article.blockId`
         connection.query(sql, [email], (err, result: Article[], fields) => {
             if (err != null) {
                 reject(err)
@@ -70,27 +91,31 @@ const queryArticlesByCommenterEmail = async (email: string): Promise<Article[]> 
     })
 }
 
-const queryArticleByBlockId = async (id: number, from: number, limit: number): Promise<Article[]> => {
+const queryArticlesByBlockId = async (id: number, from: number, limit: number): Promise<Article[]> => {
     return new Promise((resolve, reject) => {
-        const sql = `SELECT t_article.id         AS id,
-                            email,
+        const sql = `SELECT t_article.id                                          AS id,
+                            t_account.email                                       AS email,
+                            t_account.username                                    AS username,
+                            CONCAT('avatar_', t_account.email, '.', avatarFormat) AS avatar,
                             blockId,
-                            t_block.name         AS blockName,
+                            t_block.name                                          AS blockName,
                             header,
                             createdTime,
                             updatedTime,
                             (SELECT COUNT(*)
                              FROM blog.t_like
                              WHERE t_like.articleId = t_article.id
-                               AND positive = 1) AS positiveLikesCount,
+                               AND positive = 1)                                  AS positiveLikesCount,
                             (SELECT COUNT(*)
                              FROM blog.t_like
                              WHERE t_like.articleId = t_article.id
-                               AND positive = 0) AS negativeLikesCount
+                               AND positive = 0)                                  AS negativeLikesCount
                      FROM t_article,
-                          t_block
+                          t_block,
+                          t_account
                      WHERE t_article.blockId = t_block.id
                        AND blockId = ?
+                       AND t_article.email = t_account.email
                      ORDER BY t_article.id DESC
                      LIMIT ?, ?`
         connection.query(sql, [id, from, limit], (err, result: Article[]) => {
@@ -122,29 +147,50 @@ const getArticleCountByBlockId = (id: number): Promise<number> => {
     })
 }
 
-const queryHomeArticles = async (): Promise<Article[]> => {
+const getArticleCount = (): Promise<number> => {
+    return new Promise<number>((resolve, reject) => {
+        const sql = `SELECT COUNT(*) AS cnt
+                     FROM blog.t_article`
+        connection.query(sql, (err, result: {
+            cnt: number
+        }[]) => {
+            if (err != null) {
+                console.log(err)
+                reject(err)
+            } else {
+                resolve(result[0].cnt)
+            }
+        })
+    })
+}
+
+const queryHomeArticles = async (from: number, limit: number): Promise<Article[]> => {
     return new Promise((resolve, reject) => {
-        const sql = `SELECT t_article.id         AS id,
-                            t_article.email      AS email,
-                            t_account.username   AS username,
+        const sql = `SELECT t_article.id                                          AS id,
+                            t_article.email                                       AS email,
+                            t_account.username                                    AS username,
+                            CONCAT('avatar_', t_account.email, '.', avatarFormat) AS avatar,
                             blockId,
+                            t_block.name                                          AS blockName,
                             header,
                             createdTime,
                             updatedTime,
                             (SELECT COUNT(*)
                              FROM blog.t_like
                              WHERE t_like.articleId = t_article.id
-                               AND positive = 1) AS positiveLikesCount,
+                               AND positive = 1)                                  AS positiveLikesCount,
                             (SELECT COUNT(*)
                              FROM blog.t_like
                              WHERE t_like.articleId = t_article.id
-                               AND positive = 0) AS negativeLikesCount
+                               AND positive = 0)                                  AS negativeLikesCount
                      FROM t_article,
-                          t_account
+                          t_account,
+                          t_block
                      WHERE t_article.email = t_account.email
+                       AND t_article.blockId = t_block.id
                      ORDER BY id DESC
-                     LIMIT ${pageAmount}`
-        connection.query(sql, [], (err, result: Article[], fields) => {
+                     LIMIT ?, ?`
+        connection.query(sql, [from, limit], (err, result: Article[], fields) => {
             if (err != null) {
                 reject(err)
             } else {
@@ -191,11 +237,12 @@ const updateArticle = async (article: Article): Promise<string> => {
 
 export {
     queryArticle,
-    queryArticleByBlockId,
+    queryArticlesByBlockId,
     queryArticleByEmail,
     createArticle,
     updateArticle,
     queryHomeArticles,
     getArticleCountByBlockId,
-    queryArticlesByCommenterEmail
+    queryArticlesByCommenterEmail,
+    getArticleCount
 }

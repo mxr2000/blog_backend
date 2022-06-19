@@ -64,4 +64,19 @@ const deleteLike = async (articleId: number, email: string): Promise<string> => 
     })
 }
 
-export {getLikesByArticleId, postLike, deleteLike, getUserLikes}
+const getUserLikeArticle = async (articleId: number, email: string): Promise<boolean | undefined> => {
+    return new Promise((resolve, reject) => {
+        const sql = `SELECT positive FROM t_like WHERE email = ? AND articleId = ?`
+        connection.query(sql, [email, articleId], (err, result: {positive: boolean}[]) => {
+            if (err != null) {
+                reject(err)
+            } else if (result.length != 1) {
+                resolve(undefined)
+            } else {
+                resolve(result[0].positive)
+            }
+        })
+    })
+}
+
+export {getLikesByArticleId, postLike, deleteLike, getUserLikes, getUserLikeArticle}

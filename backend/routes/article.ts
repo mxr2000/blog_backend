@@ -12,19 +12,27 @@ const router = express.Router()
 
 import {ErrorResponse} from "../../common";
 import {getCurrentTimeStr} from "../utils/time";
-import {getLikesByArticleId} from "../dao/likeDao";
+import {getLikesByArticleId, getUserLikeArticle, getUserLikes} from "../dao/likeDao";
 import {queryCommentsByArticleId} from "../dao/commentDao";
 import {
-    createArticle,
+    createArticle, getArticleCount,
     getArticleCountByBlockId,
     queryArticle,
-    queryArticleByBlockId,
+    queryArticlesByBlockId,
     queryHomeArticles,
     updateArticle
 } from "../dao/articleDao";
 import {getAccountDetail} from "../dao/accountDao";
 import {getAllBlocks, queryBlock} from "../dao/blockDao";
-import {getArticleImages, postArticleImages} from "../dao/fileDao";
+import {
+    getArticleFiles,
+    getArticleImages,
+    postArticleFiles,
+    postArticleImages,
+    removeArticleImage
+} from "../dao/fileDao";
+import {authenticateToken} from "../utils/auth";
+import {ArticleImage} from "../../common/file";
 
 router.post("/", async (req, res) => {
     const createdTime = getCurrentTimeStr()
@@ -34,12 +42,17 @@ router.post("/", async (req, res) => {
         updatedTime: createdTime,
         ...data.article
     }
-    const imageIds = data.imageIds
+    const {imageIds, fileIds} = data
+
     console.log(article)
     try {
+
         const result = await createArticle(article)
         if (imageIds.length > 0) {
             await postArticleImages(imageIds, result)
+        }
+        if (fileIds.length > 0) {
+            await postArticleFiles(fileIds, result)
         }
         res.json(result)
     } catch (e) {
@@ -51,23 +64,26 @@ router.post("/", async (req, res) => {
     }
 })
 
-router.get("/detail/:id", async (req, res) => {
+router.get("/detail/:id", authenticateToken, async (req, res) => {
     const articleId = req.params.id
     try {
         const article = await queryArticle(parseInt(articleId))
         const account = await getAccountDetail(article.email)
         const comments = await queryCommentsByArticleId(parseInt(articleId))
-        const likes = await getLikesByArticleId(parseInt(articleId))
         const images = await getArticleImages(parseInt(articleId))
+        const files = await getArticleFiles(parseInt(articleId))
+        const userLike = req.email ? await getUserLikeArticle(parseInt(articleId), req.email) : undefined
+        console.log("user like " + userLike ?? "no valid token")
         article.username = account.username
-        article.likes = likes
         article.images = images
+        article.files = files
         const resp: ArticleDetailResponse = {
             email: "",
             time: getCurrentTimeStr(),
             data: {
                 article: article,
-                comments: comments
+                comments: comments,
+                likeArticle: userLike
             }
         }
         res.json(resp)
@@ -85,7 +101,7 @@ router.get("/block/:blockId/:pageIndex", async (req, res) => {
     const blockId = parseInt(req.params.blockId)
     const pageIndex = parseInt(req.params.pageIndex)
     try {
-        const articles = await queryArticleByBlockId(blockId, pageIndex * pageAmount, pageAmount)
+        const articles = await queryArticlesByBlockId(blockId, pageIndex * pageAmount, pageAmount)
         const articleCount = await getArticleCountByBlockId(blockId)
         const resp: BlockArticleResponse = {
             email: "",
@@ -106,16 +122,19 @@ router.get("/block/:blockId/:pageIndex", async (req, res) => {
     }
 })
 
-router.get("/home", async (req, res) => {
+router.get("/home/:pageIndex?", async (req, res) => {
     try {
-        const articles = await queryHomeArticles()
+        const pageIndex = parseInt(req.params.pageIndex ?? "0")
+        const articles = await queryHomeArticles(pageIndex * pageAmount, pageAmount)
         const blocks = await getAllBlocks()
+        const count = await getArticleCount()
         const resp: HomePageResponse = {
             email: "",
             time: getCurrentTimeStr(),
             data: {
                 articles: articles,
-                blocks: blocks
+                blocks: blocks,
+                articleCount: count
             }
         }
         res.json(resp)
@@ -142,6 +161,26 @@ router.put("/", async (req, res) => {
             msg: "Fuck u"
         }
         res.status(500).json(resp)
+    }
+})
+
+router.delete("/image", authenticateToken, async (req, res) => {
+    const data: ArticleImage = req.body
+    const resp: ErrorResponse = {
+        code: "500",
+        msg: "invalid request"
+    }
+    if (!data.file.id || data.file.email != req.email || !data.file.id) {
+        res.status(404).json(resp)
+        return
+    }
+    try {
+        await removeArticleImage(data.file.id, data.articleId)
+        res.json({
+            msg: "ok"
+        })
+    } catch (e) {
+        res.status(404).json(resp)
     }
 })
 

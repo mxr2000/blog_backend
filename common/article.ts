@@ -1,13 +1,14 @@
 import {SuccessResponse} from './index'
 import {Comment} from "./comment";
 import {Block} from "./block";
-import {ArticleImage} from "./file";
+import {ArticleFile, ArticleImage} from "./file";
 
 type Article = {
     id?: number
 
     email: string
     username?: string
+    avatar?: string
 
     blockId: number
     blockName?: string
@@ -22,6 +23,7 @@ type Article = {
     negativeLikesCount?: number
 
     images?: ArticleImage[]
+    files?: ArticleFile[]
 }
 
 type ArticleLike = {
@@ -35,7 +37,8 @@ const pageAmount = 10
 
 type PostArticleRequest = {
     article: Article,
-    imageIds: number[]
+    imageIds: number[],
+    fileIds: number[]
 }
 
 type PostArticleResponse = SuccessResponse<Article>
@@ -43,6 +46,7 @@ type PostArticleResponse = SuccessResponse<Article>
 type ArticleDetailResponse = SuccessResponse<{
     article: Article
     comments: Comment[]
+    likeArticle?: boolean
 }>
 
 type BlockArticleResponse = SuccessResponse<{
@@ -53,7 +57,8 @@ type BlockArticleResponse = SuccessResponse<{
 
 type HomePageResponse = SuccessResponse<{
     articles: Article[],
-    blocks: Block[]
+    blocks: Block[],
+    articleCount: number
 }>
 
 export {Article, ArticleLike, PostArticleRequest, PostArticleResponse, ArticleDetailResponse, BlockArticleResponse, HomePageResponse, pageAmount}

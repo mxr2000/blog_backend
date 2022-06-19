@@ -2,6 +2,10 @@ GET http://localhost:8000/api/article/home
 Accept: application/json
 
 ###
+GET http://34.67.235.141:8000/api/article/home
+Accept: application/json
+
+###
 GET http://localhost:8000/api/article/block/1/0
 Accept: application/json
 

@@ -4,10 +4,9 @@ import {Account} from "../../common/account";
 
 const queryAccount = async (email: string, pwd: string): Promise<Account> => {
     return new Promise((resolve, reject) => {
-        const sql = `SELECT DISTINCT t_account.email AS email, username, t_file.name AS avatar
+        const sql = `SELECT DISTINCT email AS email, username, CONCAT('avatar_', email, '.', avatarFormat) AS avatar
                      FROM t_account
-                              LEFT JOIN t_file ON t_account.avatarId = t_file.id
-                     WHERE t_account.email = ?
+                     WHERE email = ?
                        AND pwd = ?`
         connection.query(sql, [email, pwd], (err, result: Account[], fields) => {
             if (err != null) {
@@ -71,7 +70,7 @@ const updatePwd = async (account: Account): Promise<string> => {
 
 const getAccountDetail = async (email: string): Promise<Account> => {
     return new Promise((resolve, reject) => {
-        const sql = `SELECT *
+        const sql = `SELECT email, username, CONCAT('avatar_', email, '.', avatarFormat) AS avatar
                      FROM t_account
                      WHERE email = ?`
         connection.query(sql, [email], (err, result: Account[]) => {
@@ -101,12 +100,12 @@ const deleteAccount = async (email: string): Promise<string> => {
     })
 }
 
-const updateAvatar = async (email: string, fileId: number): Promise<string> => {
+const updateAvatar = async (email: string, format: string): Promise<string> => {
     return new Promise((resolve, reject) => {
         const sql = `UPDATE t_account
-                     SET avatarId = ?
+                     SET avatarFormat = ?
                      WHERE blog.t_account.email = ?`
-        connection.query(sql, [fileId, email], (err, result) => {
+        connection.query(sql, [format, email], (err, result) => {
             if (err) {
                 console.log(err)
                 reject(err)

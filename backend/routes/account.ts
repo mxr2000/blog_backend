@@ -107,10 +107,10 @@ router.put("/", async (req, res) => {
     }
 })
 
-router.post("/avatar", async (req, res) => {
+router.put("/avatar", async (req, res) => {
     const data: PostAvatarRequest = req.body
     try {
-        await updateAvatar(data.email, data.fileId)
+        await updateAvatar(data.email, data.format)
         res.json({
             msg: "ok"
         })

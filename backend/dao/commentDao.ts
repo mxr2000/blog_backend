@@ -29,7 +29,13 @@ const getCommentFromRaw = (raw: CommentRaw): Comment => {
 const queryCommentsByArticleId = async (articleId: number): Promise<Comment[]> => {
     return new Promise((resolve, reject) => {
         const sql = `
-            SELECT id, articleId, content, t_account.email AS email, username, createdTime
+            SELECT id,
+                   articleId,
+                   content,
+                   t_account.email                                       AS email,
+                   username,
+                   createdTime,
+                   CONCAT('avatar_', t_account.email, '.', avatarFormat) AS avatar
             FROM t_comment,
                  blog.t_account
             WHERE articleId = ?

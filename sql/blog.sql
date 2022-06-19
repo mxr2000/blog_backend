@@ -1,10 +1,14 @@
+create database blog;
+
+use blog;
+
 create table t_account
 (
-    email    varchar(20)   not null
+    email        varchar(20)            not null
         primary key,
-    username varchar(20)   not null,
-    pwd      varchar(20)   not null,
-    avatarId int default 0 not null
+    username     varchar(20)            not null,
+    pwd          varchar(20)            not null,
+    avatarFormat varchar(10) default '' not null
 );
 
 create table t_block
@@ -88,7 +92,37 @@ create table t_like
         foreign key (articleId) references t_article (id)
 );
 
+create table t_message
+(
+    id       int auto_increment
+        primary key,
+    receiver varchar(20)                not null,
+    sender   varchar(20)                not null,
+    content  text                       not null,
+    type     varchar(20) default 'text' not null,
+    time     varchar(30)                not null,
+    constraint t_message_t_account_email_fk
+        foreign key (sender) references t_account (email),
+    constraint t_message_t_account_email_fk_2
+        foreign key (receiver) references t_account (email)
+);
+
+create table t_notification
+(
+    id      int auto_increment
+        primary key,
+    email   varchar(20) not null,
+    time    varchar(30) not null,
+    type    varchar(20) not null,
+    content text        not null
+);
+
+
+
+INSERT INTO t_block (name)
+VALUES ('default');
+
 ALTER USER 'root' IDENTIFIED WITH mysql_native_password BY '123456';
 
-INSERT INTO t_block (name) VALUES ('default');
+FLUSH PRIVILEGES;
 

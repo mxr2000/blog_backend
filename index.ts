@@ -23,7 +23,7 @@ app.use(
 app.use("/static/file", express.static(resolve("./" + "/files")))
 app.use("/static/image", express.static(resolve("./" + "/files")))
 
-
+console.log(process.env.DB_HOST)
 
 
 app.use("/api", router)

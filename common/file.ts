@@ -12,8 +12,20 @@ type ArticleImage = {
     file: UserFile
 }
 
+type ArticleFile = {
+    articleId: number,
+    file: UserFile
+}
+
 type PostFileResponse = SuccessResponse<{
     fileId: number
 }>
 
-export {ArticleImage, UserFile, PostFileResponse}
+type PostMultipleFileResponse = SuccessResponse<{
+    files: {
+        id: number,
+        name: string
+    }[]
+}>
+
+export {ArticleImage, ArticleFile, UserFile, PostFileResponse, PostMultipleFileResponse}

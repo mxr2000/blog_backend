@@ -30,7 +30,7 @@ type LogInSuccessResponse = SuccessResponse<{
 
 type PostAvatarRequest = {
     email: string,
-    fileId: number
+    format: string
 }
 
 export {
