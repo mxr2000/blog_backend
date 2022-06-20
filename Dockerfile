@@ -1,7 +1,7 @@
 FROM node
 WORKDIR /app
-COPY dist dist
 COPY package.json package.json
 COPY files files
+COPY dist dist
 RUN npm install
 CMD ["npm", "start"]
