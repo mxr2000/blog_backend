@@ -2,7 +2,7 @@ import mysql from 'mysql'
 
 const host = process.env.MYSQL_HOST
 
-const REMOTE_HOST = "35.226.186.255"
+const REMOTE_HOST = "34.125.209.192"
 
 const config: mysql.ConnectionConfig = {
     host: host ?? REMOTE_HOST,
